@@ -1,0 +1,51 @@
+name: SSLcomSign
+author: gitspacecadet
+description: Sign an application using SSL.com's signing service
+
+inputs:
+  appFile:
+    description: Path to the application file to sign
+    required: true
+  user:
+    description: Username for SSL.com eSigner
+    required: true
+  password:
+    description: Password credential for SSL.com's eSigner
+    required: true
+  totp:
+    description: Time-based one-time password (TOTP) for SSL.com
+    required: true
+  timestampService:
+    description: The URI of the timestamp server
+    required: false  
+    default: http://ts.ssl.com
+  digestAlgorithm:
+    description: Digest algorithm for signing
+    required: false
+    default: sha256
+
+runs:
+  using: composite
+  steps:
+    - name: Run SSL.com Signing script
+      shell: pwsh
+      id: sslComSign
+      run: |
+        try {
+          . "${{ github.action_path }}/sslComSign.ps1" `
+            -appFile "${{ inputs.appFile }}" `
+            -mode ${{ inputs.mode }} `
+            -user "${{ inputs.user }}" `
+            -password (ConvertTo-SecureString "${{ inputs.password }}" -AsPlainText -Force) `
+            -totp (ConvertTo-SecureString "${{ inputs.totp }}" -AsPlainText -AsPlainText -Force) `
+            -timestampService "${{ inputs.timestampService }}" `
+            -digestAlgorithm "${{ inputs.digestAlgorithm }}"
+        }
+        catch {
+          Write-Host "::error::Unexpected error when running action ($($_.Exception.Message))"
+          exit 1
+        }
+
+branding:
+  icon: lock
+  color: blue

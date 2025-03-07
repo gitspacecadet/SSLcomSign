@@ -1,0 +1,38 @@
+name: Sign
+author: Microsoft Corporation
+inputs:
+  shell:
+    description: Shell in which you want to run the action (powershell or pwsh)
+    required: false
+    default: powershell
+  azureCredentialsJson:
+    description: Azure Credentials secret (Base 64 encoded)
+    required: true
+  pathToFiles:
+    description: The path to the files to be signed
+    required: true
+  timestampService:
+    description: The URI of the timestamp server
+    required: false
+    default: http://timestamp.digicert.com
+  digestAlgorithm:
+    description: The digest algorithm to use for signing and timestamping
+    required: false
+    default: SHA256
+runs:
+  using: composite
+  steps:
+    - name: run
+      shell: ${{ inputs.shell }}
+      env:
+        _azureCredentialsJson: ${{ inputs.azureCredentialsJson }}
+        _pathToFiles: ${{ inputs.pathToFiles }}
+        _timestampService: ${{ inputs.timestampService }}
+        _digestAlgorithm: ${{ inputs.digestAlgorithm }}
+      run: |
+        ${{ github.action_path }}/../Invoke-AlGoAction.ps1 -ActionName "Sign" -Action {
+          ${{ github.action_path }}/Sign.ps1 -AzureCredentialsJson $ENV:_azureCredentialsJson -PathToFiles $ENV:_pathToFiles -TimestampService $ENV:_timestampService -digestAlgorithm $ENV:_digestAlgorithm
+        }
+branding:
+  icon: terminal
+  color: blue
